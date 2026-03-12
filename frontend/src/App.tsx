@@ -242,7 +242,7 @@ export default function App() {
               selectedNoid={selectedNoid} selectedClassId={selectedClassId}
               myAvatar={myAvatar} objects={objects} onAction={handleAction}
             />
-            <ChatLog messages={chatMessages} />
+            <ChatLog messages={chatMessages} style={{ flex: 1 }} />
           </div>
           {/* Sidebar */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 290, flexShrink: 0 }}>

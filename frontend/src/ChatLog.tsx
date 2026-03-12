@@ -3,9 +3,10 @@ import { ChatMessage } from "./types";
 
 interface ChatLogProps {
   messages: ChatMessage[];
+  style?: React.CSSProperties;
 }
 
-export default function ChatLog({ messages }: ChatLogProps) {
+export default function ChatLog({ messages, style }: ChatLogProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -15,8 +16,8 @@ export default function ChatLog({ messages }: ChatLogProps) {
   return (
     <div style={{
       background: "#0a0a14", border: "1px solid #333",
-      borderRadius: 4, height: 140, overflowY: "auto",
-      fontFamily: "monospace", fontSize: 12,
+      borderRadius: 4, minHeight: 100, overflowY: "auto",
+      fontFamily: "monospace", fontSize: 12, ...style,
     }}>
       {/* Header */}
       <div style={{
