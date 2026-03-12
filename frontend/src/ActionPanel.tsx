@@ -31,7 +31,7 @@ export default function ActionPanel({
   // Context-sensitive action buttons
   const renderActions = () => {
     if (selectedNoid === null || selectedClassId === null) {
-      return <div style={{ color: "#666" }}>Click an object to interact</div>;
+      return <div style={{ color: "#666" }}>オブジェクトをクリックして操作 / Click an object</div>;
     }
 
     const actions: React.ReactElement[] = [];

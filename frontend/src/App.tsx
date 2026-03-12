@@ -8,6 +8,7 @@ import LoginScreen from "./LoginScreen";
 import MiniMap from "./MiniMap";
 import Inventory from "./Inventory";
 import CharacterInfo from "./CharacterInfo";
+import HelpOverlay, { HelpButton } from "./HelpOverlay";
 import {
   RegionData,
   GameObjectData,
@@ -25,6 +26,7 @@ export default function App() {
   const [selectedNoid, setSelectedNoid] = useState<number | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [showHelp, setShowHelp] = useState(true);
 
   const addChat = useCallback((name: string, text: string) => {
     setChatMessages((prev) => [...prev.slice(-99), { name, text, time: Date.now() }]);
@@ -46,6 +48,10 @@ export default function App() {
           setMyAvatar(msg.avatar);
           setSelectedNoid(null);
           setSelectedClassId(null);
+          if (msg.type === "INIT") {
+            addSystem("ようこそ Habitat へ! 右上の [?] でガイドを表示できます");
+            addSystem("ヒント: オブジェクトをクリック → アクションボタンで操作");
+          }
           if (msg.type === "REGION_CHANGE") {
             addSystem(`Entered ${msg.region.name}`);
           }
@@ -215,34 +221,38 @@ export default function App() {
   }
 
   return (
-    <div style={{
-      display: "flex", gap: 8,
-      maxWidth: 900, margin: "0 auto", padding: 16,
-      fontFamily: "monospace", background: "#050510", minHeight: "100vh",
-    }}>
-      {/* Main column */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
-        <StatusBar avatar={myAvatar} regionName={region?.name || "..."} connected={connected} />
-        <GameCanvas
-          region={region} objects={objects} avatars={avatars}
-          myNoid={myNoid} selectedNoid={selectedNoid}
-          onClickObject={handleClickObject} onClickGround={handleClickGround}
-        />
-        <ActionPanel
-          selectedNoid={selectedNoid} selectedClassId={selectedClassId}
-          myAvatar={myAvatar} objects={objects} onAction={handleAction}
-        />
-        <ChatLog messages={chatMessages} />
+    <>
+      {showHelp && <HelpOverlay onClose={() => setShowHelp(false)} />}
+      <HelpButton onClick={() => setShowHelp(true)} />
+      <div style={{
+        display: "flex", gap: 8,
+        maxWidth: 900, margin: "0 auto", padding: 16,
+        fontFamily: "monospace", background: "#050510", minHeight: "100vh",
+      }}>
+        {/* Main column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
+          <StatusBar avatar={myAvatar} regionName={region?.name || "..."} connected={connected} />
+          <GameCanvas
+            region={region} objects={objects} avatars={avatars}
+            myNoid={myNoid} selectedNoid={selectedNoid}
+            onClickObject={handleClickObject} onClickGround={handleClickGround}
+          />
+          <ActionPanel
+            selectedNoid={selectedNoid} selectedClassId={selectedClassId}
+            myAvatar={myAvatar} objects={objects} onAction={handleAction}
+          />
+          <ChatLog messages={chatMessages} />
+        </div>
+        {/* Sidebar */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 240, flexShrink: 0 }}>
+          <MiniMap currentRegionId={region?.id || 1} onNavigate={handleNavigate} />
+          <CharacterInfo avatar={myAvatar} />
+          <Inventory
+            objects={objects} myNoid={myNoid}
+            selectedNoid={selectedNoid} onSelect={handleClickObject}
+          />
+        </div>
       </div>
-      {/* Sidebar */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 240, flexShrink: 0 }}>
-        <MiniMap currentRegionId={region?.id || 1} onNavigate={handleNavigate} />
-        <CharacterInfo avatar={myAvatar} />
-        <Inventory
-          objects={objects} myNoid={myNoid}
-          selectedNoid={selectedNoid} onSelect={handleClickObject}
-        />
-      </div>
-    </div>
+    </>
   );
 }
