@@ -226,7 +226,7 @@ export default function App() {
       <HelpButton onClick={() => setShowHelp(true)} />
       <div style={{
         display: "flex", gap: 8,
-        maxWidth: 900, margin: "0 auto", padding: 16,
+        maxWidth: 950, margin: "0 auto", padding: 16,
         fontFamily: "monospace", background: "#050510", minHeight: "100vh",
       }}>
         {/* Main column */}
@@ -244,7 +244,7 @@ export default function App() {
           <ChatLog messages={chatMessages} />
         </div>
         {/* Sidebar */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 240, flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 280, flexShrink: 0 }}>
           <MiniMap currentRegionId={region?.id || 1} onNavigate={handleNavigate} />
           <CharacterInfo avatar={myAvatar} />
           <Inventory

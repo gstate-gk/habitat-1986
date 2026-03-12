@@ -28,14 +28,14 @@ export default function MiniMap({ currentRegionId, onNavigate }: MiniMapProps) {
       <div style={{ color: "#666", fontSize: 11, marginBottom: 4, textAlign: "center" }}>
         World Map
       </div>
-      <svg width="240" height="170" viewBox="0 0 240 170">
+      <svg width="100%" viewBox="0 0 240 170" style={{ display: "block" }}>
         {CONNECTIONS.map(([a, b]) => {
           const ra = ROOMS.find(r => r.id === a)!;
           const rb = ROOMS.find(r => r.id === b)!;
           return (
             <line key={`${a}-${b}`}
               x1={ra.x} y1={ra.y} x2={rb.x} y2={rb.y}
-              stroke="#333" strokeWidth={1}
+              stroke="#333" strokeWidth={1.5}
             />
           );
         })}
@@ -44,16 +44,16 @@ export default function MiniMap({ currentRegionId, onNavigate }: MiniMapProps) {
           return (
             <g key={room.id} onClick={() => onNavigate(room.id)} style={{ cursor: "pointer" }}>
               <rect
-                x={room.x - 30} y={room.y - 12} width={60} height={24}
+                x={room.x - 34} y={room.y - 14} width={68} height={28}
                 rx={4} fill={isCurrent ? room.color + "33" : "#111"}
                 stroke={isCurrent ? room.color : "#444"}
-                strokeWidth={isCurrent ? 2 : 1}
+                strokeWidth={isCurrent ? 2.5 : 1}
               />
               <text
-                x={room.x} y={room.y + 4}
-                textAnchor="middle" fontSize={9}
-                fill={isCurrent ? room.color : "#888"}
-                fontFamily="monospace"
+                x={room.x} y={room.y + 5}
+                textAnchor="middle" fontSize={12}
+                fill={isCurrent ? room.color : "#999"}
+                fontFamily="monospace" fontWeight={isCurrent ? "bold" : "normal"}
               >
                 {room.name}
               </text>
