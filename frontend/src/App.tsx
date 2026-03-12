@@ -225,32 +225,34 @@ export default function App() {
       {showHelp && <HelpOverlay onClose={() => setShowHelp(false)} />}
       <HelpButton onClick={() => setShowHelp(true)} />
       <div style={{
-        display: "flex", gap: 8,
-        maxWidth: 950, margin: "0 auto", padding: 16,
+        display: "flex", flexDirection: "column", gap: 8,
+        maxWidth: 960, margin: "0 auto", padding: 16,
         fontFamily: "monospace", background: "#050510", minHeight: "100vh",
       }}>
-        {/* Main column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
-          <StatusBar avatar={myAvatar} regionName={region?.name || "..."} connected={connected} />
-          <GameCanvas
-            region={region} objects={objects} avatars={avatars}
-            myNoid={myNoid} selectedNoid={selectedNoid}
-            onClickObject={handleClickObject} onClickGround={handleClickGround}
-          />
-          <ActionPanel
-            selectedNoid={selectedNoid} selectedClassId={selectedClassId}
-            myAvatar={myAvatar} objects={objects} onAction={handleAction}
-          />
-          <ChatLog messages={chatMessages} />
-        </div>
-        {/* Sidebar */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 280, flexShrink: 0 }}>
-          <MiniMap currentRegionId={region?.id || 1} onNavigate={handleNavigate} />
-          <CharacterInfo avatar={myAvatar} />
-          <Inventory
-            objects={objects} myNoid={myNoid}
-            selectedNoid={selectedNoid} onSelect={handleClickObject}
-          />
+        <StatusBar avatar={myAvatar} regionName={region?.name || "..."} connected={connected} />
+        <div style={{ display: "flex", gap: 8 }}>
+          {/* Main column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
+            <GameCanvas
+              region={region} objects={objects} avatars={avatars}
+              myNoid={myNoid} selectedNoid={selectedNoid}
+              onClickObject={handleClickObject} onClickGround={handleClickGround}
+            />
+            <ActionPanel
+              selectedNoid={selectedNoid} selectedClassId={selectedClassId}
+              myAvatar={myAvatar} objects={objects} onAction={handleAction}
+            />
+            <ChatLog messages={chatMessages} />
+          </div>
+          {/* Sidebar */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 290, flexShrink: 0 }}>
+            <MiniMap currentRegionId={region?.id || 1} onNavigate={handleNavigate} />
+            <CharacterInfo avatar={myAvatar} />
+            <Inventory
+              objects={objects} myNoid={myNoid}
+              selectedNoid={selectedNoid} onSelect={handleClickObject}
+            />
+          </div>
         </div>
       </div>
     </>
