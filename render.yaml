@@ -1,0 +1,4 @@
+services:
+  - type: web
+    name: habitat-1986
+    runtime: docker
