@@ -251,7 +251,6 @@ export default function App() {
             <Inventory
               objects={objects} myNoid={myNoid}
               selectedNoid={selectedNoid} onSelect={handleClickObject}
-              style={{ flex: 1 }}
             />
           </div>
         </div>

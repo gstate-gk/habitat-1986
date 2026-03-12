@@ -6,13 +6,13 @@ interface MiniMapProps {
 }
 
 const ROOMS: { id: number; name: string; x: number; y: number; color: string }[] = [
-  { id: 1, name: "Town Square", x: 150, y: 100, color: "#00ff88" },
-  { id: 2, name: "Bank", x: 40, y: 100, color: "#ffcc00" },
-  { id: 3, name: "Store", x: 260, y: 100, color: "#ff8844" },
-  { id: 4, name: "Park", x: 150, y: 185, color: "#44cc44" },
-  { id: 5, name: "Teleport", x: 260, y: 185, color: "#44ccff" },
-  { id: 6, name: "Haunted", x: 40, y: 25, color: "#aa44ff" },
-  { id: 7, name: "Lounge", x: 260, y: 25, color: "#ff44aa" },
+  { id: 1, name: "Town Square", x: 145, y: 165, color: "#00ff88" },
+  { id: 2, name: "Bank", x: 40, y: 165, color: "#ffcc00" },
+  { id: 3, name: "Store", x: 250, y: 165, color: "#ff8844" },
+  { id: 4, name: "Park", x: 145, y: 280, color: "#44cc44" },
+  { id: 5, name: "Teleport", x: 250, y: 280, color: "#44ccff" },
+  { id: 6, name: "Haunted", x: 40, y: 50, color: "#aa44ff" },
+  { id: 7, name: "Lounge", x: 250, y: 50, color: "#ff44aa" },
 ];
 
 const CONNECTIONS: [number, number][] = [
@@ -28,7 +28,7 @@ export default function MiniMap({ currentRegionId, onNavigate }: MiniMapProps) {
       <div style={{ color: "#666", fontSize: 11, marginBottom: 4, textAlign: "center" }}>
         World Map
       </div>
-      <svg width="100%" viewBox="0 0 300 210" style={{ display: "block" }}>
+      <svg width="100%" viewBox="0 0 290 330" style={{ display: "block" }}>
         {CONNECTIONS.map(([a, b]) => {
           const ra = ROOMS.find(r => r.id === a)!;
           const rb = ROOMS.find(r => r.id === b)!;
