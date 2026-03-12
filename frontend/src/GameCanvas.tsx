@@ -24,6 +24,20 @@ const FONT = "16px monospace";
 const FONT_LARGE = "20px monospace";
 const FONT_SMALL = "11px monospace";
 
+// Per-region color themes
+const REGION_THEMES: Record<number, {
+  sky: [string, string]; ground: [string, string];
+  indoor: string; tile: string; wall: string;
+}> = {
+  1: { sky: ["#1a0a30", "#2a1555"], ground: ["#1a3a1a", "#0a200a"], indoor: "#0c0c18", tile: "#1a1a2e", wall: "#2a1a3a" }, // Town Square - default
+  2: { sky: ["#1a1a00", "#2a2510"], ground: ["#2a2a0a", "#1a1a00"], indoor: "#12100a", tile: "#2a2818", wall: "#3a3020" }, // Bank - gold
+  3: { sky: ["#0a1a30", "#152a55"], ground: ["#1a2a3a", "#0a1a2a"], indoor: "#0a0c18", tile: "#181a2e", wall: "#1a2a3a" }, // Store - blue
+  4: { sky: ["#0a2010", "#153518"], ground: ["#0a3a0a", "#052005"], indoor: "#0a140a", tile: "#1a2e1a", wall: "#1a3a1a" }, // Park - green
+  5: { sky: ["#200a30", "#351555"], ground: ["#2a1a3a", "#1a0a2a"], indoor: "#100a18", tile: "#2a1a2e", wall: "#3a1a3a" }, // Teleport - purple
+  6: { sky: ["#0a0010", "#150020"], ground: ["#0a0a0a", "#050505"], indoor: "#06040a", tile: "#12101a", wall: "#1a0a2a" }, // Haunted - dark purple
+  7: { sky: ["#200a0a", "#351515"], ground: ["#2a1010", "#1a0808"], indoor: "#140a0a", tile: "#2e1a1a", wall: "#3a1a2a" }, // Lounge - red/pink
+};
+
 // Convert world coordinates to canvas coordinates
 function worldToCanvas(
   wx: number,
@@ -62,13 +76,14 @@ export default function GameCanvas({
     if (!canvas || !region) return;
     const ctx = canvas.getContext("2d")!;
 
-    // --- Background ---
+    // --- Background (per-region theme) ---
+    const theme = REGION_THEMES[region.id] || REGION_THEMES[1];
     const isOutdoor = region.terrain_type === 1;
     if (isOutdoor) {
       // Sky gradient
       const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H * 0.4);
-      skyGrad.addColorStop(0, "#1a0a30");
-      skyGrad.addColorStop(1, "#2a1555");
+      skyGrad.addColorStop(0, theme.sky[0]);
+      skyGrad.addColorStop(1, theme.sky[1]);
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H * 0.4);
 
@@ -82,17 +97,17 @@ export default function GameCanvas({
 
       // Ground
       const groundGrad = ctx.createLinearGradient(0, CANVAS_H * 0.4, 0, CANVAS_H);
-      groundGrad.addColorStop(0, "#1a3a1a");
-      groundGrad.addColorStop(1, "#0a200a");
+      groundGrad.addColorStop(0, theme.ground[0]);
+      groundGrad.addColorStop(1, theme.ground[1]);
       ctx.fillStyle = groundGrad;
       ctx.fillRect(0, CANVAS_H * 0.4, CANVAS_W, CANVAS_H * 0.6);
     } else {
       // Indoor — dark tiled floor
-      ctx.fillStyle = "#0c0c18";
+      ctx.fillStyle = theme.indoor;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
       // Floor tiles
-      ctx.strokeStyle = "#1a1a2e";
+      ctx.strokeStyle = theme.tile;
       ctx.lineWidth = 0.5;
       for (let x = 0; x < CANVAS_W; x += 32) {
         ctx.beginPath();
@@ -108,7 +123,7 @@ export default function GameCanvas({
       }
 
       // Walls
-      ctx.fillStyle = "#2a1a3a";
+      ctx.fillStyle = theme.wall;
       ctx.fillRect(0, 0, CANVAS_W, 40);
       ctx.fillRect(0, 0, 8, CANVAS_H);
       ctx.fillRect(CANVAS_W - 8, 0, 8, CANVAS_H);

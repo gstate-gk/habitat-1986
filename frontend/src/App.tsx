@@ -5,6 +5,9 @@ import ActionPanel from "./ActionPanel";
 import StatusBar from "./StatusBar";
 import ChatLog from "./ChatLog";
 import LoginScreen from "./LoginScreen";
+import MiniMap from "./MiniMap";
+import Inventory from "./Inventory";
+import CharacterInfo from "./CharacterInfo";
 import {
   RegionData,
   GameObjectData,
@@ -191,27 +194,55 @@ export default function App() {
     [send, myNoid]
   );
 
+  const handleNavigate = useCallback(
+    (regionId: number) => {
+      // Find a door that leads to the target region, or use direct navigation
+      const door = objects.find(
+        (o) => o.class_id === 23 && o.extra?.destination_region === regionId
+      );
+      if (door) {
+        send({ action: "DO", noid: door.noid, args: {} });
+      } else {
+        // Use GOTO action for minimap navigation
+        send({ action: "GOTO", args: { region_id: regionId } });
+      }
+    },
+    [objects, send]
+  );
+
   if (!playerName) {
     return <LoginScreen onLogin={setPlayerName} />;
   }
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", gap: 8,
-      maxWidth: 660, margin: "0 auto", padding: 16,
+      display: "flex", gap: 8,
+      maxWidth: 900, margin: "0 auto", padding: 16,
       fontFamily: "monospace", background: "#050510", minHeight: "100vh",
     }}>
-      <StatusBar avatar={myAvatar} regionName={region?.name || "..."} connected={connected} />
-      <GameCanvas
-        region={region} objects={objects} avatars={avatars}
-        myNoid={myNoid} selectedNoid={selectedNoid}
-        onClickObject={handleClickObject} onClickGround={handleClickGround}
-      />
-      <ActionPanel
-        selectedNoid={selectedNoid} selectedClassId={selectedClassId}
-        myAvatar={myAvatar} objects={objects} onAction={handleAction}
-      />
-      <ChatLog messages={chatMessages} />
+      {/* Main column */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
+        <StatusBar avatar={myAvatar} regionName={region?.name || "..."} connected={connected} />
+        <GameCanvas
+          region={region} objects={objects} avatars={avatars}
+          myNoid={myNoid} selectedNoid={selectedNoid}
+          onClickObject={handleClickObject} onClickGround={handleClickGround}
+        />
+        <ActionPanel
+          selectedNoid={selectedNoid} selectedClassId={selectedClassId}
+          myAvatar={myAvatar} objects={objects} onAction={handleAction}
+        />
+        <ChatLog messages={chatMessages} />
+      </div>
+      {/* Sidebar */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 240, flexShrink: 0 }}>
+        <MiniMap currentRegionId={region?.id || 1} onNavigate={handleNavigate} />
+        <CharacterInfo avatar={myAvatar} />
+        <Inventory
+          objects={objects} myNoid={myNoid}
+          selectedNoid={selectedNoid} onSelect={handleClickObject}
+        />
+      </div>
     </div>
   );
 }

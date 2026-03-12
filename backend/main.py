@@ -145,7 +145,15 @@ async def websocket_endpoint(websocket: WebSocket, player_name: str):
     try:
         while True:
             msg = await websocket.receive_json()
-            result = await region.handle_message(avatar_noid, msg)
+            # Minimap GOTO — direct region navigation
+            if msg.get("action") == "GOTO":
+                dest_id = msg.get("args", {}).get("region_id")
+                if dest_id and dest_id != region.region.region_id:
+                    result = {"_region_change": True, "destination": dest_id}
+                else:
+                    result = {"info": "Already here"}
+            else:
+                result = await region.handle_message(avatar_noid, msg)
 
             # Handle region change (door/teleport)
             if result.get("_region_change"):
