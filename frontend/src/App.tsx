@@ -230,7 +230,7 @@ export default function App() {
         fontFamily: "monospace", background: "#050510", minHeight: "100vh",
       }}>
         <StatusBar avatar={myAvatar} regionName={region?.name || "..."} connected={connected} />
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
           {/* Main column */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
             <GameCanvas
@@ -251,6 +251,7 @@ export default function App() {
             <Inventory
               objects={objects} myNoid={myNoid}
               selectedNoid={selectedNoid} onSelect={handleClickObject}
+              style={{ flex: 1 }}
             />
           </div>
         </div>

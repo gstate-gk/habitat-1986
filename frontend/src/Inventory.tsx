@@ -5,15 +5,16 @@ interface InventoryProps {
   myNoid: number;
   selectedNoid: number | null;
   onSelect: (noid: number, classId: number) => void;
+  style?: React.CSSProperties;
 }
 
-export default function Inventory({ objects, myNoid, selectedNoid, onSelect }: InventoryProps) {
+export default function Inventory({ objects, myNoid, selectedNoid, onSelect, style }: InventoryProps) {
   const carried = objects.filter(o => o.container_noid === myNoid);
 
   return (
     <div style={{
       background: "#0a0a14", border: "1px solid #333", borderRadius: 4,
-      padding: 8,
+      padding: 8, ...style,
     }}>
       <div style={{ color: "#666", fontSize: 11, marginBottom: 4, textAlign: "center" }}>
         Inventory ({carried.length})
