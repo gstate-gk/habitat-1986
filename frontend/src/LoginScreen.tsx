@@ -72,7 +72,21 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </button>
         </div>
 
-        <div style={{ marginTop: 24, color: "#444", fontSize: 11 }}>
+        <div style={{
+          marginTop: 24, padding: "16px 0", borderTop: "1px solid #222",
+          color: "#777", fontSize: 12, lineHeight: 1.8, textAlign: "left",
+        }}>
+          <div style={{ color: "#aaa", marginBottom: 8, textAlign: "center" }}>How to Play</div>
+          <div style={{ paddingLeft: 12 }}>
+            <span style={{ color: "#00ff88" }}>+</span> Click doors to move between rooms<br />
+            <span style={{ color: "#00ff88" }}>+</span> Click objects to see action buttons<br />
+            <span style={{ color: "#00ff88" }}>+</span> Click empty ground to walk there<br />
+            <span style={{ color: "#00ff88" }}>+</span> Type messages and click Speak to chat<br />
+            <span style={{ color: "#555" }}>7 rooms: Town Square, Bank, Store, Park, Teleport Hub, Haunted House, Chip's Lounge</span>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12, color: "#444", fontSize: 11 }}>
           MIT License &middot; Copyright (c) 1985 Lucasfilm Games Division
         </div>
       </div>
