@@ -31,7 +31,7 @@ export default function ActionPanel({
   // Context-sensitive action buttons
   const renderActions = () => {
     if (selectedNoid === null || selectedClassId === null) {
-      return <div style={{ color: "#666" }}>オブジェクトをクリックして操作 / Click an object</div>;
+      return <div style={{ color: "#444", fontSize: 12 }}>オブジェクトをクリックして操作 / Click an object</div>;
     }
 
     const actions: React.ReactElement[] = [];
@@ -304,38 +304,68 @@ export default function ActionPanel({
     }
 
     return (
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
-        <span style={{ color: "#aaa", marginRight: 8 }}>{className}:</span>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+        <span style={{
+          color: "#00ff88", fontSize: 11, background: "#0a2a0a",
+          border: "1px solid #1a3a1a", borderRadius: 3,
+          padding: "2px 8px", marginRight: 4,
+        }}>
+          {className}
+        </span>
         {actions}
       </div>
     );
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div style={{
+      background: "#0a0a14", border: "1px solid #333",
+      borderRadius: 4, overflow: "hidden",
+    }}>
       {/* Action buttons */}
       <div style={{
-        background: "#0a0a14", border: "1px solid #333",
-        padding: 8, borderRadius: 4, minHeight: 36,
+        padding: "8px 10px", minHeight: 36,
+        borderBottom: "1px solid #222",
+        display: "flex", alignItems: "center",
       }}>
         {renderActions()}
       </div>
 
       {/* Chat input */}
-      <div style={{ display: "flex", gap: 4 }}>
+      <div style={{
+        display: "flex", gap: 0,
+        background: "#0c0c18",
+      }}>
+        <div style={{
+          color: "#444", fontSize: 10, padding: "10px 8px 10px 10px",
+          display: "flex", alignItems: "center", letterSpacing: 1,
+        }}>
+          SAY
+        </div>
         <input
           type="text"
           value={chatText}
           onChange={(e) => setChatText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleChat()}
-          placeholder="Say something..."
+          placeholder="Type a message..."
           style={{
-            flex: 1, background: "#1a1a2e", color: "#fff",
-            border: "1px solid #444", padding: "6px 10px",
-            borderRadius: 4, fontFamily: "monospace",
+            flex: 1, background: "transparent", color: "#ddd",
+            border: "none", padding: "8px 6px", outline: "none",
+            fontFamily: "monospace", fontSize: 13,
           }}
         />
-        <button onClick={handleChat}>Speak</button>
+        <button
+          onClick={handleChat}
+          style={{
+            background: "#1a1a3a", color: "#00ff88", border: "none",
+            borderLeft: "1px solid #222",
+            padding: "8px 16px", cursor: "pointer",
+            fontFamily: "monospace", fontSize: 12, fontWeight: "bold",
+            letterSpacing: 1,
+          }}
+        >
+          SEND
+        </button>
       </div>
     </div>
   );
