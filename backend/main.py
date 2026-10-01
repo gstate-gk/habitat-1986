@@ -19,7 +19,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
 
-from .database import init_db, get_region, get_region_objects, save_avatar, load_avatar
+from .database import (init_db, get_region, get_region_objects, save_avatar,
+                       load_avatar, save_region_objects, save_region_flags)
 from .models import Avatar, ClassID
 from .region_processor import RegionProcessor
 from .objects import register_all
@@ -27,6 +28,7 @@ from .objects import register_all
 
 # --- Global state (PL/I: external declarations) ---
 regions: dict[int, RegionProcessor] = {}
+_tasks: list = []
 
 
 async def load_region(region_id: int) -> RegionProcessor | None:
@@ -42,10 +44,45 @@ async def load_region(region_id: int) -> RegionProcessor | None:
     processor = RegionProcessor(region_data)
     objects = await get_region_objects(region_id)
     for obj in objects:
-        processor.add_object(obj)
+        held_by = obj.extra.get("_held_by")
+        if held_by:
+            processor.stash.setdefault(held_by, []).append(obj)
+        else:
+            processor.add_object(obj)
 
     regions[region_id] = processor
+    _tasks.append(asyncio.create_task(processor.tact_loop()))
     return processor
+
+
+async def checkpoint_region(processor: RegionProcessor) -> None:
+    """PL/I checkpoint_object for the whole region: objects and flags."""
+    names = {noid: a.name for noid, a in processor.avatars.items()}
+    rows = list(processor.objects.values())
+    for items in processor.stash.values():
+        rows.extend(items)
+    await save_region_objects(processor.region.region_id, rows, names)
+    await save_region_flags(processor.region)
+    processor.dirty = False
+
+
+async def checkpoint_loop(interval: float = 30.0):
+    while True:
+        await asyncio.sleep(interval)
+        for processor in list(regions.values()):
+            if processor.dirty:
+                try:
+                    await checkpoint_region(processor)
+                except Exception as e:
+                    print(f"checkpoint error: {e!r}")
+
+
+def adopt_held_objects(processor: RegionProcessor, avatar_noid: int, name: str) -> None:
+    """Re-bind objects saved as held by this avatar name (noids change per session)."""
+    for o in processor.stash.pop(name, []):
+        o.extra.pop("_held_by", None)
+        o.container_noid = avatar_noid
+        processor.add_object(o)
 
 
 @asynccontextmanager
@@ -54,7 +91,15 @@ async def lifespan(app: FastAPI):
     from .seed_data import seed
     await seed()
     register_all()
+    _tasks.append(asyncio.create_task(checkpoint_loop()))
     yield
+    for t in _tasks:
+        t.cancel()
+    for processor in list(regions.values()):
+        try:
+            await checkpoint_region(processor)
+        except Exception as e:
+            print(f"shutdown checkpoint error: {e!r}")
 
 
 app = FastAPI(title="Habitat (1986 Lucasfilm MMO)", lifespan=lifespan)
@@ -117,6 +162,7 @@ async def websocket_endpoint(websocket: WebSocket, player_name: str):
         return
 
     avatar_noid = region.add_avatar(avatar, websocket)
+    adopt_held_objects(region, avatar_noid, avatar.name)
 
     # Send initial state to new player
     await websocket.send_json({
@@ -166,14 +212,22 @@ async def websocket_endpoint(websocket: WebSocket, player_name: str):
                         "noid": avatar_noid,
                         "name": avatar.name,
                     })
+                    carried = region.detach_held(avatar_noid, avatar.name)
+                    region.stash.pop(avatar.name, None)
                     region.remove_avatar(avatar_noid)
                     await save_avatar(avatar, dest_id)
+
+                    for o in carried:
+                        new_region.stash.setdefault(avatar.name, []).append(o)
+                    await checkpoint_region(region)
 
                     # Enter new region
                     avatar.x = 80
                     avatar.y = 130
                     avatar.travel += 1
                     avatar_noid = new_region.add_avatar(avatar, websocket)
+                    adopt_held_objects(new_region, avatar_noid, avatar.name)
+                    new_region.dirty = True
                     region = new_region
 
                     await websocket.send_json({
@@ -210,8 +264,13 @@ async def websocket_endpoint(websocket: WebSocket, player_name: str):
             "noid": avatar_noid,
             "name": avatar.name,
         })
+        region.detach_held(avatar_noid, avatar.name)
         region.remove_avatar(avatar_noid)
         await save_avatar(avatar, region.region.region_id)
+        try:
+            await checkpoint_region(region)
+        except Exception as e:
+            print(f"checkpoint error: {e!r}")
 
 
 # Static files mount MUST be last (catch-all for frontend assets)

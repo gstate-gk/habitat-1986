@@ -197,8 +197,12 @@ class Avatar:
     bank_account: int = 5000
     tokens_in_hand: int = 100
     curse_type: int = CurseType.NONE
+    curse_counter: int = 0
+    curse_immune: bool = False
+    true_head_style: int = 0
     name: str = ""
     turf_region: int = 0
+    customize: list = field(default_factory=lambda: [0, 0])
     # Statistics
     deaths: int = 0
     kills: int = 0
@@ -224,6 +228,7 @@ class Region:
     neighbor_south: int = 0
     # Lighting
     lighting: int = 1
+    weapons_free: bool = False
 
 
 @dataclass

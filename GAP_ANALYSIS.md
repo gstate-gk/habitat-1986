@@ -93,3 +93,49 @@ reports/HABITAT_ANALYSIS_REPORT.md は第1段階を「代表約15クラス」、
 ・是正1（DESIGN.md 訂正）完了: 「完全変換」を「部分変換」に、「161 ClassID」を実測の「108」に訂正。世界データは原典 1,649 地域のうち 7 地域（約0.4%）、原典にない創作（coke_machine、Hand of God 全回復、ghost 攻撃、武器別ダメージ表）を DESIGN.md に明記。コード修正なし
 ・分類: 上記は「文書の過大記載の是正」（欠落・簡略化は引き続き未是正）
 ・未是正（別途対応）: 是正2〜8（創作挙動の原典準拠化、呪い・アバター固有アクション、固有アクション約30クラス、永続化、魔法29種、地域タイマー、.reg ローダー）
+
+## 7. 是正記録（2026-10-02、原典準拠化）
+
+テスト: `tests/test_original_actions.py` 28件（WSL Ubuntu、pytest）全通過。frontend の `npm run build` 通過。実行比較（原典実機との突き合わせ）はしていない。
+
+### 7.1 4分類（是正後）
+
+実装済み（原典 class_*.pl1 と1対1で変換、`backend/objects/original_actions.py`）
+・coke_machine PAY（$5、HP回復なし）、fortune_machine PAY（$2、原典90文を `fortunes_data.py` に抽出、`tools/extract_fortunes.py`）、pawn_machine MUNCH
+・generic_ATTACK（knife/club/gun。固定20ダメージ、スタン時・weapons_free地域で不可、DEATHで kill_avatar）
+・die ROLL、game_piece、compass DIRECT、drugs TAKE/HELP（回復・毒・黒化）、spray_can SPRAY、shovel DIG、windup_toy WIND、bottle FILL/POUR、changomatic CHANGE、sex_changer SEXCHANGE、stun_gun STUN、fake_gun FAKESHOOT/RESET、tokens SPLIT、escape_dev BUGOUT、sensor SCAN、matchbook、tape、garbage_can FLUSH、aquarium FEED
+・grenade PULLPIN（20秒信管、Tactで爆発、全アバター20ダメージ）、magic_lamp RUB/WISH（30秒×2のジーニー待機タイマー）
+・Tactスケジューラ（`RegionProcessor.tact/clear_tact/process_tact/tact_loop`、秒単位）
+・呪い curses.pl1（TOUCH、COOTIES/SMILEY/MUTANT/FLY、カウンタ、免疫、buzzify の b/B 規則）
+・永続化（オブジェクト、持ち物、curse_type/curse_counter/免疫、weapons_free、30秒チェックポイント、切断・地域移動・終了時保存、DB列の自動マイグレーション）
+・kill_avatar の original 準拠（持ち物を落とす、銀行20%没収、死亡数加算）
+・DO ボタンは各クラスの主アクションへ割り当て（`PRIMARY_DO`。UI側の対応でWeb版固有）
+
+簡略化
+・トークンは整数 `tokens_in_hand`（原典は TOKENS オブジェクト）。`adjacent()` は原典の old_adjacent（常に真）
+・kill_avatar の復活は現地域（原典は auto_teleport で turf へ）
+・呪いの頭: 頭オブジェクトが無いため `Avatar.style` を head.style の代用にした。「頭なしは免疫」規則は未再現
+・boomerang の戻り: 原典は schedule_event がスタブで戻らない。Web版は 10〜30 秒後に戻す（意図的変更、理由は「動かない機能を移植しても意味がないため」）
+・aquarium: 原典も schedule_event スタブのため FEEDING で止まる（同じ挙動）
+・magic_lamp の WISH は原典 message_to_god（ソース未入手）の代わりにサーバログへ出力
+・test_bit の桁番号は LSB=0 と仮定（原典の PL/I bit 配置は未検証）
+・保留中の Tact（導火線中の手榴弾など）は再起動で消える
+
+欠落（未着手）
+・アバター ESP/SIT/NEWREGION/DISCORPORATE/FNKEY、avatar PAY
+・jukebox/stereo/elevator/vendo の固有アクション、tokens PAY、paper、mail、magic.pl1 の29魔法
+・定員監視・ghost list・オラクル、turf、hatchery、統計・履歴
+・pawn_machine の item_value（原典テーブル未入手のため `extra["value"]` 参照）
+・原典データの地域ロード（下記 7.2）
+
+追加（原典になし）
+・SWITCH の ON/OFF（原典クラス表に対応なし）
+・GOTO ミニマップ、`PRIMARY_DO`、最近接アバターを標的に補う処理（クライアントが標的IDを送らないため）
+
+除去した創作: coke の HP+20、10文の偽 fortune、Hand of God の全回復+1000トークン（原典は HELP のみ）、ghost の攻撃（原典は攻撃なし）、武器別ダメージ表（原典は一律20）、gun の弾数、changomatic/sex_changer のスタイル循環。意図的に残した創作は boomerang の戻りのみ。
+
+### 7.2 世界データ 1,649 地域の変換可否
+
+調査結果: `.reg` は 512 バイト単位のコンパイル済みバイナリ（3,299 本）で、機械変換には構造定義の逆解析が必要で見合わない。テキストの `.rdl`（1,042 本）が地域記述の原典で、機械変換が可能。
+実施: `tools/rdl_to_regions.py` が `.rdl` を JSON（地域名・隣接・オブジェクト入れ子・スロット値）へ変換する。実測は、重複名を除いて 504 地域、オブジェクト 5,465 個、未知クラス 0、隣接参照の未解決 6（`slur/foo.rdl` 等テスト用ファイルの外部参照）。
+未実施: JSON を DB/seed へ取り込む処理と、各クラスの属性スロット（sign の文字列、teleport のアドレス等）の意味づけ。原典 1,649 のうち `.rdl` として残るのは 504 で、残り約 1,145 地域は `.rdl` が現存しない（`.reg` のみ）。工数見積: 取り込み+スロット意味づけで約 600 行、`.reg` 逆解析は別途大。

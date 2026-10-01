@@ -283,3 +283,14 @@ result = handler.dispatch(action, region, noid, args)
 - サービスタイプ: Web Service
 - ビルド: Docker
 - ポート: 8080
+
+## 11. 原典準拠化（2026-10-02）
+
+4分類は GAP_ANALYSIS.md 第7章を正とする。要点は次のとおり。
+
+・実装済み: 各クラス固有アクション（`backend/objects/original_actions.py`、`(ClassID, ACTION)` 表）、Tactタイマー（`RegionProcessor.tact`）、呪い（`backend/curses.py`）、オブジェクト・持ち物・呪い・weapons_free の永続化（`database.py`、30秒チェックポイント）
+・簡略化: トークン整数化、復活は現地域、呪いの頭は `Avatar.style` で代用、boomerang の戻りは意図的変更
+・欠落: アバター ESP/SIT/NEWREGION、jukebox/stereo/elevator/vendo、29魔法、定員・オラクル、turf
+・追加: SWITCH、`PRIMARY_DO`（クライアントの DO を各クラスの主アクションへ割り当て）
+・除去した創作: 7.1 参照。1節の「創作要素あり」は「創作は boomerang の戻りのみ」に読み替える
+・世界データ: `tools/rdl_to_regions.py` で `.rdl` 504 地域を JSON 化できる（取り込みは未実施）

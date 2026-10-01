@@ -52,29 +52,14 @@ class HandOfGodHandler(BaseObject):
         return {"type": "identify", "class_name": "Hand Of God", "name": "The divine hand."}
 
     async def handle_DO(self, region, noid, args):
-        avatar_noid = args.get("avatar_noid")
-        avatar = region.get_avatar(avatar_noid)
-        if avatar:
-            avatar.health = 255
-            avatar.tokens_in_hand = 1000
-            await region.broadcast_all({
-                "type": "SPEAK", "name": "Hand of God",
-                "text": f"{avatar.name} has been blessed!",
-            })
-            return {"type": "ACTION_RESULT", "text": "Full heal + 1000 tokens!"}
-        return {"type": "ACTION_RESULT", "text": "The hand waves ominously."}
+        # Original class_hand_of_god has HELP only; DO is an illegal action.
+        return {"success": False, "error": "illegal action: DO"}
 
 
 class SexChangerHandler(BaseObject):
-    """Change avatar appearance style."""
+    """class_sex_changer: the SEXCHANGE action is in original_actions.py
+    (toggles the avatar's sex bit; the old style cycling was an invention)."""
 
     async def handle_HELP(self, region, noid, args):
-        return {"type": "identify", "class_name": "Sex Changer", "name": "Changes your appearance."}
-
-    async def handle_DO(self, region, noid, args):
-        avatar_noid = args.get("avatar_noid")
-        avatar = region.get_avatar(avatar_noid)
-        if avatar:
-            avatar.style = (avatar.style + 4) % 8
-            return {"type": "ACTION_RESULT", "text": f"Your appearance has changed! (Style {avatar.style})"}
-        return {"type": "ACTION_RESULT", "text": "Step inside to change."}
+        return {"type": "identify", "class_name": "Sex Changer",
+                "name": "Changes your sex."}

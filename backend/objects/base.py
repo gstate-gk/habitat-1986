@@ -29,6 +29,16 @@ class BaseObject:
                        noid: int, args: dict) -> dict:
         """Dispatch action to handler method.
         PL/I: call Class_Table(obj.class).actions->a(current_request);"""
+        from . import original_actions as oa
+        obj = region.objects.get(noid)
+        if obj is not None:
+            if action == "DO":
+                action = oa.resolve_primary(obj.class_id, obj) or action
+            fn = oa.CLASS_ACTIONS.get((int(obj.class_id), action))
+            if fn is not None:
+                avatar = region.avatars.get(args.get("avatar_noid"))
+                if avatar is not None:
+                    return await fn(region, obj, avatar, args)
         method_name = f"handle_{action}"
         method = getattr(self, method_name, None)
         if method:

@@ -14,23 +14,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from .base import BaseObject
 from ..models import CurseType, Posture
+from ..curses import buzzify, curse_touch
 
 if TYPE_CHECKING:
     from ..region_processor import RegionProcessor
 
 
-def buzzify(text: str) -> str:
-    """PL/I: buzzify — CURSE_FLY replaces all letters with 'z'.
-    translate(text, 'zzz...', 'abc...')"""
-    result = []
-    for ch in text:
-        if ch.isalpha():
-            result.append('Z' if ch.isupper() else 'z')
-        elif ch.isdigit():
-            result.append('z')
-        else:
-            result.append(ch)
-    return "".join(result)
 
 
 class AvatarHandler(BaseObject):
@@ -162,3 +151,23 @@ class AvatarHandler(BaseObject):
             "health": avatar.health,
             "bank_account": avatar.bank_account,
         }
+
+    async def handle_TOUCH(self, region: "RegionProcessor",
+                           noid: int, args: dict) -> dict:
+        """PL/I: avatar_TOUCH — 'Gotcha!' and curse transmission."""
+        avatar = region.get_avatar(noid)
+        touchee = region.get_avatar(args.get("target", -1))
+        if not avatar or not touchee:
+            return {"success": False}
+        if "posture" in args:
+            avatar.activity = args["posture"]
+            await region.broadcast(noid, {"type": "POSTURE", "noid": noid,
+                                          "posture": args["posture"]})
+        for who in (touchee.noid, noid):
+            await region.send_to(who, {"type": "SPEAK", "name": avatar.name,
+                                       "text": "Gotcha!"})
+        if avatar.curse_type != CurseType.NONE:
+            curse_touch(avatar, touchee)
+        elif touchee.curse_type != CurseType.NONE:
+            curse_touch(touchee, avatar)
+        return {"success": True}

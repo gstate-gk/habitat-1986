@@ -3,13 +3,6 @@ PL/I: class_ghost.pl1, class_house_cat.pl1, class_bureaucrat.pl1"""
 import random
 from .base import BaseObject
 
-GHOST_MESSAGES = [
-    "OooOOOooo...",
-    "Begone, mortal!",
-    "I haunt these halls...",
-    "Boo!",
-    "The afterlife is boring.",
-]
 
 CAT_ACTIONS = [
     "The cat purrs contentedly.",
@@ -53,17 +46,9 @@ class CreatureHandler(BaseObject):
         from ..models import ClassID
 
         if obj.class_id == ClassID.GHOST:
-            msg = random.choice(GHOST_MESSAGES)
-            await region.broadcast_all({"type": "SPEAK", "name": "Ghost", "text": msg})
-            # Ghost might attack
-            if random.random() < 0.3:
-                avatar_noid = args.get("avatar_noid")
-                avatar = region.get_avatar(avatar_noid)
-                if avatar:
-                    damage = random.randint(5, 15)
-                    avatar.health = max(0, avatar.health - damage)
-                    return {"type": "ACTION_RESULT", "text": f"The ghost attacks! (-{damage} HP)"}
-            return {"type": "ACTION_RESULT", "text": msg}
+            # Original class_ghost has no attack and no DO action
+            # (ghost_WALK/NEWREGION/CORPORATE only). The old random attack was removed.
+            return {"success": False, "error": "illegal action: DO"}
 
         if obj.class_id == ClassID.HOUSE_CAT:
             action = random.choice(CAT_ACTIONS)

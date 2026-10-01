@@ -15,8 +15,13 @@ Python equivalent: asyncio event loop + WebSocket message dispatch.
 """
 from __future__ import annotations
 import asyncio
-from typing import Optional
-from fastapi import WebSocket
+import heapq
+import itertools
+import time
+from typing import Callable, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fastapi import WebSocket
 
 from .models import Avatar, Region, GameObject, ClassID
 from .objects.base import OBJECT_REGISTRY
@@ -37,11 +42,63 @@ class RegionProcessor:
         self.avatars: dict[int, Avatar] = {}      # noid → avatar
         self.users: dict[int, WebSocket] = {}     # noid → websocket
         self._next_noid = 10
+        # PL/I Tact: timed callbacks. Delay unit is seconds
+        # (class_magic_lamp.pl1: GENIE_TIMEOUT 30 "30 seconds").
+        self._tacts: list = []
+        self._tact_seq = itertools.count()
+        self._tact_live: set[int] = set()
+        self.clock: Callable[[], float] = time.monotonic
+        # checkpoint flag (PL/I gen_flags(MODIFIED) -> checkpoint_object)
+        self.dirty = False
+        # objects carried by avatars who are offline: avatar name -> objects
+        self.stash: dict[str, list[GameObject]] = {}
 
     def alloc_noid(self) -> int:
+        while (self._next_noid in self.objects
+               or self._next_noid in self.avatars):
+            self._next_noid += 1
         noid = self._next_noid
         self._next_noid += 1
         return noid
+
+    # --- Tact (timer events) ---
+
+    def tact(self, delay: float, callback: Callable, *args) -> int:
+        """PL/I: call Tact(proc, arg, delay). Returns a handle.
+        callback is an async function called as callback(region, *args)."""
+        handle = next(self._tact_seq)
+        heapq.heappush(self._tacts, (self.clock() + delay, handle, callback, args))
+        self._tact_live.add(handle)
+        return handle
+
+    def clear_tact(self, handle: Optional[int]) -> bool:
+        """PL/I: ClearTactByValue."""
+        if handle in self._tact_live:
+            self._tact_live.discard(handle)
+            return True
+        return False
+
+    async def process_tact(self, now: Optional[float] = None) -> int:
+        """PL/I: ProcessTact. Runs every callback that is due; returns count."""
+        now = self.clock() if now is None else now
+        ran = 0
+        while self._tacts and self._tacts[0][0] <= now:
+            _, handle, callback, args = heapq.heappop(self._tacts)
+            if handle not in self._tact_live:
+                continue
+            self._tact_live.discard(handle)
+            try:
+                await callback(self, *args)
+            except Exception as e:  # keep the event loop alive
+                print(f"tact error in region {self.region.region_id}: {e!r}")
+            ran += 1
+        return ran
+
+    async def tact_loop(self, interval: float = 1.0):
+        """asyncio form of the regionproc.pl1 s$task_wait_event loop."""
+        while True:
+            await asyncio.sleep(interval)
+            await self.process_tact()
 
     def add_object(self, obj: GameObject) -> int:
         if obj.noid == 0:
@@ -154,6 +211,8 @@ class RegionProcessor:
         args["avatar_noid"] = sender_noid
 
         result = await handler.dispatch(action, self, target_noid, args)
+        if action != "HELP":
+            self.dirty = True
 
         # Handle region changes (door/teleport)
         if result.get("type") == "region_change":
@@ -195,3 +254,17 @@ class RegionProcessor:
                 await ws.send_json(msg)
             except Exception:
                 self.users.pop(noid, None)
+
+    # --- carried objects across leave \/ region change ---
+
+    def detach_held(self, avatar_noid: int, name: str) -> list[GameObject]:
+        """Take the objects an avatar holds out of the region (leave/disconnect).
+        They are kept in self.stash under the avatar name and saved with it."""
+        held = [o for o in self.objects.values() if o.container_noid == avatar_noid]
+        for o in held:
+            self.objects.pop(o.noid, None)
+            o.extra["_held_by"] = name
+        if held:
+            self.stash.setdefault(name, []).extend(held)
+            self.dirty = True
+        return held
