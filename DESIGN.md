@@ -5,7 +5,7 @@
 | 項目 | 内容 |
 |------|------|
 | システム名 | Habitat（1986 Lucasfilm MMO 復元） |
-| 目的 | 世界初のグラフィカルMMO「Habitat」をPL/I（Stratus VOS）からPython+Reactに完全変換 |
+| 目的 | 世界初のグラフィカルMMO「Habitat」をPL/I（Stratus VOS）からPython+Reactへ部分変換（核となる仕組みのみ。固有アクション・タイマー・永続化・世界データは未移植、創作要素あり。詳細は GAP_ANALYSIS.md） |
 | 種別 | リアルタイムWebアプリケーション（WebSocket） |
 | 原作 | PL/I 26,218行（Stratus VOS / Commodore 64クライアント） |
 | 実装規模 | Python + React 約4,622行（82%削減） |
@@ -16,7 +16,7 @@
 - アバター操作（移動、ポーズ変更、発言）
 - 108種類のオブジェクトクラス（ATM、銃、テレポーター、自販機等）
 - リアルタイムマルチプレイヤー（WebSocket双方向通信）
-- 7つのリージョン（町の広場、銀行、公園、お化け屋敷等）
+- 7つのリージョン（町の広場、銀行、公園、お化け屋敷等。原典は1,649地域のうち7地域=約0.4%のみ。原典にない創作: coke_machine、Hand of Godの全回復、ghostの攻撃、武器別ダメージ表）
 - アイテムの拾う/置く/使う/装備
 - 呪い・スタン等の状態異常システム
 - レトロASCII風キャンバスレンダリング
@@ -65,7 +65,7 @@ habitat/
 ├── frontend/
 │   └── src/
 │       ├── App.tsx             # メインコンポーネント、状態管理
-│       ├── types.ts            # TypeScript型定義、ClassID列挙（161エントリ）
+│       ├── types.ts            # TypeScript型定義、ClassID列挙（108エントリ、実測）
 │       ├── useWebSocket.ts     # WebSocketカスタムHook（自動再接続）
 │       ├── GameCanvas.tsx      # レトロASCIIレンダラー（640x400 Canvas）
 │       ├── ActionPanel.tsx     # コンテキスト依存アクションボタン
@@ -178,7 +178,7 @@ INIT, REGION_CHANGE, AVATAR_ENTER, AVATAR_LEAVE, WALK, POSTURE, SPEAK, GRAB, HAN
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | noid | PK AUTO | オブジェクトインスタンスID |
-| class_id | INT | ClassID列挙値（161種類） |
+| class_id | INT | ClassID列挙値（108種類、実測） |
 | region_id | FK | 所属リージョン |
 | x, y | INT | 座標 |
 | container_noid | INT | 0=地面、それ以外=所有者noid |
@@ -249,7 +249,7 @@ result = handler.dispatch(action, region, noid, args)
 - 640x400 Canvas（レトロASCII風）
 - リージョン別カラーテーマ（Town Square=ダーク、Bank=ゴールド、Park=グリーン）
 - クリックで歩行・オブジェクト操作
-- ClassID別のASCIIスプライト + 色定義（161エントリ）
+- ClassID別のASCIIスプライト + 色定義（108エントリ）
 
 ### 8.2 WebSocket自動再接続
 
